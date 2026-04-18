@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detectare Mâini & Față - MediaPipe Modular</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    
+    <!-- Stiluri Custom -->
+    <link rel="stylesheet" href="./css/style.css">
+
+    <!-- MediaPipe Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+
+    <div class="container py-4 d-flex flex-column align-items-center">
+        <h1 class="mb-4 text-center">Detectare Gesturi: Mâini & Față</h1>
+
+        <div class="card bg-dark text-white mb-4 p-3 shadow" style="border-radius: 12px; width: 100%; max-width: 400px;">
+            <div class="d-flex justify-content-around">
+                <div class="form-check form-check-inline m-0">
+                    <input class="form-check-input" type="radio" name="mode" id="modeHands" value="hands" checked style="cursor: pointer; transform: scale(1.2);">
+                    <label class="form-check-label fs-5 fw-bold" for="modeHands" style="cursor: pointer;">
+                        ✋ Mâini
+                    </label>
+                </div>
+                <div class="form-check form-check-inline m-0">
+                    <input class="form-check-input" type="radio" name="mode" id="modeFace" value="face" style="cursor: pointer; transform: scale(1.2);">
+                    <label class="form-check-label fs-5 fw-bold" for="modeFace" style="cursor: pointer;">
+                        😃 Față
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div id="gesture-output" class="none text-center w-100 mb-3">Se inițializează camera...</div>
+
+        <div class="video-container shadow-lg">
+            <video id="input-video" autoplay playsinline></video>
+            <canvas id="output-canvas" width="640" height="480"></canvas>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS (Optional, for components like tooltips, modals) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+    <!-- Modele și Cameră -->
+    <script src="./js/models/hand-gesture.js"></script>
+    <script src="./js/models/face-gesture.js"></script>
+    <script src="./js/camera.js"></script>
+    
+    <!-- App Logic -->
+    <script src="./js/app.js"></script>
+
+</body>
+
+</html>
