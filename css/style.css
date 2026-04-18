@@ -5,8 +5,6 @@ body {
 }
 
 #gesture-output {
-    font-size: 2.5rem;
-    font-weight: bold;
     min-height: 80px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     display: flex;
@@ -19,9 +17,7 @@ body {
     border: 4px solid #333;
     border-radius: 12px;
     overflow: hidden;
-    background-color: #000;
-    max-width: 640px;
-    margin: 0 auto;
+    /* Aspect ratio fallback or rely on canvas height based on width */
 }
 
 video {
@@ -30,8 +26,17 @@ video {
 
 canvas {
     display: block;
-    width: 100%;
     transform: scaleX(-1);
+}
+
+/* Custom form check inputs styling for better click area */
+.form-check-input {
+    cursor: pointer;
+    transform: scale(1.2);
+}
+
+.form-check-label {
+    cursor: pointer;
 }
 
 /* Culori Mâini */
