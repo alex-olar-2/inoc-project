@@ -139,4 +139,4 @@ Algoritmul analizează **468 de landmark-uri** ale feței furnizate de MediaPipe
 
 ## 📝 Licență
 
-Proiect academic — Universitatea din Oradea, INOC.
+Proiect academic — Universitatea din Suceava, INOC.
