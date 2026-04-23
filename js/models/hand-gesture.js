@@ -2,10 +2,10 @@ function detectHandGesture(landmarks) {
     const thumbTip = landmarks[4], indexTip = landmarks[8];
     const middleTip = landmarks[12], ringTip = landmarks[16], pinkyTip = landmarks[20];
 
-    const isIndexUp = indexTip.y < landmarks[6].y;
+    const isIndexUp  = indexTip.y  < landmarks[6].y;
     const isMiddleUp = middleTip.y < landmarks[10].y;
-    const isRingUp = ringTip.y < landmarks[14].y;
-    const isPinkyUp = pinkyTip.y < landmarks[18].y;
+    const isRingUp   = ringTip.y   < landmarks[14].y;
+    const isPinkyUp  = pinkyTip.y  < landmarks[18].y;
 
     const pinchDist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
     if (pinchDist < 0.05) return { text: "🤙 Pinch", className: "pinch" };
@@ -24,7 +24,7 @@ function detectHandGesture(landmarks) {
 function initHandsModel(canvasCtx, canvasElement, gestureOutput, getCurrentMode) {
     const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
     hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
-    
+
     hands.onResults((results) => {
         if (getCurrentMode() !== 'hands') return;
 
@@ -39,13 +39,21 @@ function initHandsModel(canvasCtx, canvasElement, gestureOutput, getCurrentMode)
 
             const gesture = detectHandGesture(landmarks);
             gestureOutput.innerText = gesture.text;
-            gestureOutput.className = gesture.className;
+            gestureOutput.className = `gesture-output ${gesture.className}`;
+
+            // → Trimite gestul către HomeController
+            if (typeof HomeController !== 'undefined') {
+                HomeController.processGesture(gesture.className);
+            }
         } else {
-            gestureOutput.innerText = "Arată o mână..."; 
-            gestureOutput.className = "none";
+            gestureOutput.innerText = "Arată o mână...";
+            gestureOutput.className = "gesture-output none";
+            if (typeof HomeController !== 'undefined') {
+                HomeController.processGesture('none');
+            }
         }
         canvasCtx.restore();
     });
-    
+
     return hands;
 }

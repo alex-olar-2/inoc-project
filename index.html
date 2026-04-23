@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="ro">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detectare Mâini & Față - MediaPipe Modular</title>
-    
+    <title>Casa Virtuală Inteligentă – Control prin Gesturi</title>
+    <meta name="description" content="Controlează becurile, centrala și alarma casei tale prin gesturi detectate cu camera web.">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    
+
     <!-- Stiluri Custom -->
     <link rel="stylesheet" href="./css/style.css">
 
@@ -18,54 +21,218 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 </head>
-
 <body>
 
-    <div class="container py-4">
-        <div class="row justify-content-center">
-            <div class="col-12 col-lg-8 d-flex flex-column align-items-center">
-                <h1 class="mb-4 text-center h2">Detectare Gesturi: Mâini & Față</h1>
+    <!-- ===== HEADER ===== -->
+    <header class="app-header">
+        <div class="header-brand">
+            <span class="brand-icon">🏠</span>
+            <div class="brand-text">
+                <span class="brand-name">Casa Virtuală</span>
+                <span class="brand-sub">Control prin Gesturi · INOC</span>
+            </div>
+        </div>
+        <div class="header-controls">
+            <div class="mode-switcher" id="mode-switcher">
+                <label class="mode-btn" for="modeHands">
+                    <input type="radio" name="mode" id="modeHands" value="hands" checked>
+                    <span>✋ Mâini</span>
+                </label>
+                <label class="mode-btn" for="modeFace">
+                    <input type="radio" name="mode" id="modeFace" value="face">
+                    <span>😃 Față</span>
+                </label>
+            </div>
+            <button id="reset-btn" onclick="HomeController.reset()">
+                🔄 Reset
+            </button>
+        </div>
+    </header>
 
-                <div class="card bg-dark text-white mb-4 shadow w-100" style="border-radius: 12px; max-width: 400px;">
-                    <div class="card-body p-3">
-                        <div class="d-flex justify-content-around align-items-center">
-                            <div class="form-check form-check-inline m-0">
-                                <input class="form-check-input" type="radio" name="mode" id="modeHands" value="hands" checked>
-                                <label class="form-check-label fs-5 fw-bold" for="modeHands">
-                                    ✋ Mâini
-                                </label>
-                            </div>
-                            <div class="form-check form-check-inline m-0">
-                                <input class="form-check-input" type="radio" name="mode" id="modeFace" value="face">
-                                <label class="form-check-label fs-5 fw-bold" for="modeFace">
-                                    😃 Față
-                                </label>
-                            </div>
+    <!-- ===== MAIN ===== -->
+    <main class="app-main">
+
+        <!-- LEFT: Camera + Gest -->
+        <section class="camera-panel">
+            <div class="panel-title">📷 Feed Cameră</div>
+
+            <div class="video-container">
+                <video id="input-video" autoplay playsinline></video>
+                <canvas id="output-canvas" width="640" height="480"></canvas>
+                <div id="alarm-overlay" class="alarm-overlay"></div>
+            </div>
+
+            <!-- Gest detectat -->
+            <div class="gesture-card">
+                <div class="gesture-label-row">
+                    <span class="gesture-prefix">Gest detectat:</span>
+                    <div id="gesture-output" class="gesture-output none">Se inițializează...</div>
+                </div>
+
+                <div class="gesture-confirm-row">
+                    <!-- Inel progres confirmare -->
+                    <div class="confirm-ring-wrap">
+                        <svg class="confirm-ring" viewBox="0 0 36 36">
+                            <circle class="ring-bg"   cx="18" cy="18" r="15.9"/>
+                            <circle class="ring-fill" id="confirm-fill-circle" cx="18" cy="18" r="15.9"
+                                    stroke-dasharray="0 100" stroke-dashoffset="25"/>
+                        </svg>
+                        <span class="ring-center-icon">⏳</span>
+                    </div>
+                    <div id="confirm-status" class="confirm-status">Arată un gest...</div>
+                </div>
+
+                <!-- Cooldown bar -->
+                <div id="cooldown-bar-wrapper" class="cooldown-bar-wrapper" style="display:none;">
+                    <span class="cooldown-label">⏱️ Cooldown activ...</span>
+                    <div class="cooldown-track">
+                        <div id="cooldown-progress" class="cooldown-progress"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend gesturi -->
+            <div class="gesture-legend">
+                <div class="legend-title">📖 Referință Gesturi</div>
+                <div class="legend-grid">
+                    <div class="legend-item"><span class="lg-gest">🖐️ Palm</span><span class="lg-arrow">→</span><span class="lg-action">Bec Living ON</span></div>
+                    <div class="legend-item"><span class="lg-gest">✊ Fist</span><span class="lg-arrow">→</span><span class="lg-action">Bec Living OFF</span></div>
+                    <div class="legend-item"><span class="lg-gest">👍 Thumbs</span><span class="lg-arrow">→</span><span class="lg-action">Centrală ON</span></div>
+                    <div class="legend-item"><span class="lg-gest">🤙 Pinch</span><span class="lg-arrow">→</span><span class="lg-action">Centrală OFF</span></div>
+                    <div class="legend-item"><span class="lg-gest">✌️ Peace</span><span class="lg-arrow">→</span><span class="lg-action">Armează alarmă</span></div>
+                    <div class="legend-item"><span class="lg-gest">👆 Point</span><span class="lg-arrow">→</span><span class="lg-action">Dezarmează alarmă</span></div>
+                    <div class="legend-item"><span class="lg-gest">😲 Surprised</span><span class="lg-arrow">→</span><span class="lg-action">Bec Dormitor ON</span></div>
+                    <div class="legend-item"><span class="lg-gest">😄 Happy</span><span class="lg-arrow">→</span><span class="lg-action">Mod Seară (toate)</span></div>
+                    <div class="legend-item"><span class="lg-gest">😑 Blink</span><span class="lg-arrow">→</span><span class="lg-action">Oprire Urgență ⚠️</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT: Casa virtuală -->
+        <section class="home-panel">
+            <div class="panel-title">🏠 Plan Casă</div>
+
+            <!-- Planul casei: 4 camere -->
+            <div class="floor-plan">
+                <!-- Living -->
+                <div class="room" id="room-living">
+                    <div class="room-glow" id="glow-living"></div>
+                    <div class="room-header">
+                        <span class="room-icon">🛋️</span>
+                        <span class="room-name">Living</span>
+                    </div>
+                    <div class="bulb-wrap">
+                        <div class="bulb" id="bulb-living">💡</div>
+                        <div class="device-status status-off" id="status-bec_living">STINS</div>
+                    </div>
+                    <div class="room-hint">🖐️ / ✊</div>
+                </div>
+
+                <!-- Dormitor -->
+                <div class="room" id="room-dormitor">
+                    <div class="room-glow" id="glow-dormitor"></div>
+                    <div class="room-header">
+                        <span class="room-icon">🛏️</span>
+                        <span class="room-name">Dormitor</span>
+                    </div>
+                    <div class="bulb-wrap">
+                        <div class="bulb" id="bulb-dormitor">💡</div>
+                        <div class="device-status status-off" id="status-bec_dormitor">STINS</div>
+                    </div>
+                    <div class="room-hint">😲 Surprised</div>
+                </div>
+
+                <!-- Baie -->
+                <div class="room" id="room-baie">
+                    <div class="room-glow" id="glow-baie"></div>
+                    <div class="room-header">
+                        <span class="room-icon">🚿</span>
+                        <span class="room-name">Baie</span>
+                    </div>
+                    <div class="bulb-wrap">
+                        <div class="bulb" id="bulb-baie">💡</div>
+                        <div class="device-status status-off" id="status-bec_baie">STINS</div>
+                    </div>
+                    <div class="room-hint">😄 Happy (Seară)</div>
+                </div>
+
+                <!-- Bucătărie -->
+                <div class="room" id="room-bucatarie">
+                    <div class="room-glow" id="glow-bucatarie"></div>
+                    <div class="room-header">
+                        <span class="room-icon">🍳</span>
+                        <span class="room-name">Bucătărie</span>
+                    </div>
+                    <div class="bulb-wrap">
+                        <div class="bulb" id="bulb-bucatarie">💡</div>
+                        <div class="device-status status-off" id="status-bec_bucatarie">STINS</div>
+                    </div>
+                    <div class="room-hint">😄 Happy (Seară)</div>
+                </div>
+            </div>
+
+            <!-- Sisteme casă -->
+            <div class="sys-devices">
+                <!-- Centrală -->
+                <div class="sys-device" id="sys-centrala">
+                    <div class="sys-left">
+                        <div class="sys-icon" id="centrala-icon">🌡️</div>
+                        <div class="sys-info">
+                            <div class="sys-name">Centrală Termică</div>
+                            <div class="sys-status status-off" id="status-centrala">OPRITĂ</div>
                         </div>
+                    </div>
+                    <div class="sys-right">
+                        <div class="sys-hints"><span>👍 ON</span><span>🤙 OFF</span></div>
+                        <div class="sys-indicator" id="ind-centrala"></div>
                     </div>
                 </div>
 
-                <div id="gesture-output" class="none text-center w-100 mb-3 fs-3 fw-bold">Se inițializează camera...</div>
-
-                <div class="video-container shadow-lg bg-black w-100">
-                    <video id="input-video" autoplay playsinline></video>
-                    <canvas id="output-canvas" width="640" height="480" class="w-100 h-auto"></canvas>
+                <!-- Alarmă -->
+                <div class="sys-device" id="sys-alarma">
+                    <div class="sys-left">
+                        <div class="sys-icon" id="alarma-icon">🔓</div>
+                        <div class="sys-info">
+                            <div class="sys-name">Alarmă Securitate</div>
+                            <div class="sys-status status-off" id="status-alarma">DEZARMATĂ</div>
+                        </div>
+                    </div>
+                    <div class="sys-right">
+                        <div class="sys-hints"><span>✌️ ARM</span><span>👆 DEZARM</span></div>
+                        <div class="sys-indicator" id="ind-alarma"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Bootstrap JS (Optional, for components like tooltips, modals) -->
+            <!-- Jurnal acțiuni -->
+            <div class="action-log-card">
+                <div class="log-header">
+                    <span class="log-title">📜 Jurnal Acțiuni</span>
+                    <span id="log-count" class="log-count">0 acțiuni</span>
+                </div>
+                <div class="action-log" id="action-log">
+                    <div class="log-empty">Nicio acțiune încă. Arată un gest!</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 
-    <!-- Modele și Cameră -->
+    <!-- Smart Home Module (ordine contează: state → ui → controller) -->
+    <script src="./js/smart-home/home-state.js"></script>
+    <script src="./js/smart-home/home-ui.js"></script>
+    <script src="./js/smart-home/home-controller.js"></script>
+
+    <!-- MediaPipe Models + Camera -->
     <script src="./js/models/hand-gesture.js"></script>
     <script src="./js/models/face-gesture.js"></script>
     <script src="./js/camera.js"></script>
-    
-    <!-- App Logic -->
+
+    <!-- App Entry Point -->
     <script src="./js/app.js"></script>
 
 </body>
-
 </html>
