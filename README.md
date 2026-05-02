@@ -4,15 +4,75 @@
 
 ---
 
-## ✨ Prezentare Generală
+## 🎯 1. Obiectivele Aplicației și Viziunea Proiectului
 
-**Casa Virtuală Inteligentă** este o aplicație web care permite controlul dispozitivelor dintr-o casă simulată — becuri, centrală termică, alarmă de securitate — prin **gesturi detectate automat** cu ajutorul camerei web, fără niciun click sau atingere.
+**Casa Virtuală Inteligentă** a fost concepută ca un prototip de interfață om-calculator (HCI) care explorează eliminarea barierelor fizice în controlul mediului ambiant. Proiectul își propune să demonstreze cum tehnologiile de **Computer Vision** și **Machine Learning** pot fi integrate într-o aplicație web accesibilă pentru a simula gestionarea unei locuințe smart.
 
-Sistemul folosește **MediaPipe** (Google) pentru detecția în timp real a landmarks-urilor mâinii și feței, combinate cu o arhitectură modulară JavaScript ce mapează gesturile la acțiuni smart home.
+### Aspecte cheie vizate:
+
+- **Accesibilitate Non-Tactilă:** Crearea unui sistem util pentru persoanele cu dizabilități motorii sau pentru situații în care atingerea unei suprafețe este imposibilă sau neigienică (ex: bucătărie, medii medicale).
+- **Interacțiune Intuitivă:** Utilizarea gesturilor naturale (palma deschisă, pumn strâns, zâmbet) care sunt ușor de memorat și executat de către utilizatori de orice vârstă.
+- **Procesare "On-Device":** Garantarea intimității prin procesarea fluxului video local, fără a trimite imagini către un server extern.
 
 ---
 
-## 🖥️ Interfață
+## 🛠️ 2. Mediul de Dezvoltare
+
+Pentru realizarea acestui proiect, s-a optat pentru un ecosistem de dezvoltare modern, axat pe viteză și modularitate:
+
+- **Editor de Cod:** [Visual Studio Code](https://code.visualstudio.com/) cu extensii pentru formatare (Prettier) și Live Server.
+- **Limbaje:** HTML5 (pentru structură semantică), CSS3 (pentru design premium și animații hardware-accelerated) și JavaScript (ES6+ pentru logică).
+- **Controlul Versiunilor:** Git pentru gestionarea istoricului de cod și GitHub pentru deployment (via GitHub Pages).
+- **Testare și Debugging:** Chrome DevTools a fost instrumentul principal pentru optimizarea performanței modelelor ML și pentru monitorizarea ratei de cadre pe secundă (FPS).
+- **Server Local:** Utilizarea `python -m http.server` sau `npx serve` pentru a simula un mediu de producție și a evita restricțiile de securitate ale browserului privind accesul la cameră în fișiere locale (`file://`).
+
+---
+
+## 🧠 3. Biblioteci Specifice Interacțiunii Gestuale
+
+Sâmburele tehnologic al aplicației este reprezentat de ecosistemul **MediaPipe**, dezvoltat de Google, care oferă modele pre-antrenate de înaltă fidelitate:
+
+1.  **MediaPipe Hands:**
+    - **Funcționare:** Detectează 21 de puncte cheie (landmarks) 3D ale mâinii dintr-un singur cadru video.
+    - **Utilizare în proiect:** Clasificăm gesturile prin calcularea distanțelor euclidiene între vârful degetelor și bază (ex: dacă vârful degetului mare este aproape de baza degetului arătător, detectăm un gest de "Pinch").
+2.  **MediaPipe Face Mesh:**
+    - **Funcționare:** Estimează 468 de puncte cheie ale feței în timp real.
+    - **Utilizare în proiect:** Monitorizăm indici precum "Lip Distance" pentru a detecta o gură deschisă (Surprised) sau distanța dintre colțurile gurii pentru a detecta un zâmbet (Happy).
+3.  **MediaPipe Camera & Drawing Utils:**
+    - Asigură sincronizarea perfectă între frame-urile video și overlay-ul grafic pe Canvas, oferind feedback vizual utilizatorului despre ce "vede" algoritmul.
+
+---
+
+## ⚖️ 4. Avantajele și Dezavantajele Implementării
+
+Alegerea unei implementări bazate pe browser (Client-Side JavaScript) vine cu un set specific de compromisuri:
+
+### ✅ Avantaje:
+
+- **Confidențialitate Totală:** Imaginile camerei web nu părăsesc niciodată dispozitivul utilizatorului.
+- **Fără Instalare:** Utilizatorul trebuie doar să acceseze un URL; nu sunt necesare drivere sau software adițional.
+- **Latență Minimă:** Deoarece detecția se face local, nu există lag-ul indus de rețea, rezultând într-o experiență fluidă.
+- **Costuri Reduse:** Nu este necesară o infrastructură puternică de servere pentru procesarea video.
+
+### ❌ Dezavantaje:
+
+- **Consum de Resurse:** Rularea modelelor ML în browser este solicitantă pentru procesor (CPU) și placa video (GPU), putând reduce autonomia bateriei pe laptopuri.
+- **Dependență de Iluminare:** Calitatea detecției scade drastic în condiții de luminozitate slabă sau dacă fundalul este foarte aglomerat.
+- **Vocabular Limitat de Gesturi:** Algoritmii de clasificare custom (euristici) pot genera "false-positives" dacă mâna este ținută într-un unghi neobișnuit.
+
+---
+
+## 🔍 5. Elemente Concludente și Inovații
+
+Pe parcursul dezvoltării, am identificat și implementat câteva elemente critice pentru succesul experienței de utilizare:
+
+- **Mecanismul de Debounce (Confirmare):** Pentru a evita activările accidentale (ex: utilizatorul se scarpină la nas și sistemul crede că e un gest), am implementat un inel de confirmare de 1.5 secunde. Acțiunea se execută doar dacă gestul este menținut stabil.
+- **Sistemul de Cooldown:** După fiecare comandă, sistemul intră într-o stare de repaus de 2 secunde pentru a preveni trimiterea de comenzi multiple pentru aceeași acțiune.
+- **Feedback Vizual Dual:** Utilizatorul vede atât scheletul mâinii/feței pe camera video, cât și starea actualizată în timp real pe planul casei, creând o legătură mentală puternică între gest și efect.
+
+---
+
+## 🖥️ Interfață și Structură
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -31,41 +91,19 @@ Sistemul folosește **MediaPipe** (Google) pentru detecția în timp real a land
 └───────────────────────────┴─────────────────────────────────────┘
 ```
 
----
+### 🕹️ Mapare Gesturi → Acțiuni
 
-## 🕹️ Mapare Gesturi → Acțiuni
-
-### ✋ Modul Mâini
-
-| Gest | Emoji | Acțiune |
-|---|:---:|---|
-| Open Palm | 🖐️ | Aprinde becul din **Living** |
-| Fist | ✊ | Stinge becul din **Living** |
-| Thumbs Up | 👍 | Pornește **Centrala Termică** |
-| Pinch | 🤙 | Oprește **Centrala Termică** |
-| Peace / V | ✌️ | **Armează** alarma de securitate |
-| Point | 👆 | **Dezarmează** alarma de securitate |
-
-### 😃 Modul Față
-
-| Gest | Emoji | Acțiune |
-|---|:---:|---|
-| Surprised (gură deschisă) | 😲 | Aprinde becul din **Dormitor** |
-| Happy (zâmbet) | 😄 | **Mod Seară** – aprinde toate becurile |
-| Blink (clipire) | 😑 | ⚠️ **Oprire urgență** – stinge totul |
-
----
-
-## ⚙️ Mecanismul de Confirmare
-
-Pentru a preveni activările accidentale, sistemul folosește un **debounce în 2 faze**:
-
-```
-Gest detectat → ⏳ Confirmare 1.5s → ✅ Acțiune executată → ⏱️ Cooldown 2s
-```
-
-- **Inelul de progres** (SVG animat) arată vizual progresul confirmării
-- **Bara de cooldown** apare după execuție, blocând activări repetate
+| Mod          | Gest         | Acțiune                    |
+| ------------ | ------------ | -------------------------- |
+| **✋ Mâini** | 🖐️ Palm      | Aprinde becul din Living   |
+| **✋ Mâini** | ✊ Fist      | Stinge becul din Living    |
+| **✋ Mâini** | 👍 Thumbs Up | Pornește Centrala Termică  |
+| **✋ Mâini** | 🤙 Pinch     | Oprește Centrala Termică   |
+| **✋ Mâini** | ✌️ Peace     | Armează alarma             |
+| **✋ Mâini** | 👆 Point     | Dezarmează alarma          |
+| **😃 Față**  | 😲 Surprised | Aprinde becul din Dormitor |
+| **😃 Față**  | 😄 Happy     | Mod Seară (totul ON)       |
+| **😃 Față**  | 😑 Blink     | Oprire urgență (totul OFF) |
 
 ---
 
@@ -73,106 +111,17 @@ Gest detectat → ⏳ Confirmare 1.5s → ✅ Acțiune executată → ⏱️ Coo
 
 ```
 inoc_project_v3/
-│
-├── index.html                      # Layout principal (split-screen)
-│
-├── css/
-│   └── style.css                   # Design dark premium, animații CSS
-│
+├── index.html                      # Layout principal
+├── css/style.css                   # Design premium & animații
 └── js/
-    ├── app.js                      # Entry point, inițializare
+    ├── app.js                      # Entry point
     ├── camera.js                   # Wrapper MediaPipe Camera
-    │
-    ├── models/
-    │   ├── hand-gesture.js         # Detectare & clasificare gesturi mână
-    │   └── face-gesture.js         # Detectare & clasificare gesturi față
-    │
-    └── smart-home/
-        ├── home-state.js           # Starea centralizată a dispozitivelor
-        ├── home-ui.js              # Actualizare DOM / animații UI
-        └── home-controller.js      # Logica de control + debounce
+    ├── models/                     # Logica AI (Hand/Face)
+    └── smart-home/                 # Logica de business (State/UI/Control)
 ```
-
----
-
-## 🚀 Cum rulezi proiectul
-
-> ⚠️ **Browserul trebuie să aibă acces la cameră.** Nu este necesară nicio instalare sau server.
-
-### Rapid (fișier local)
-
-1. Clonează sau descarcă repozitoriul
-2. Deschide `index.html` direct în **Google Chrome** sau **Microsoft Edge**
-3. Permite accesul la cameră când browserul solicită
-4. Selectează modul dorit (**Mâini** sau **Față**) și începe să faci gesturi!
-
-### Cu un server local (recomandat pentru dev)
-
-```bash
-# Python 3
-python -m http.server 8080
-
-# Node.js (npx)
-npx serve .
-```
-
-Apoi accesează `http://localhost:8080` în browser.
-
----
-
-## 📦 Dependențe (CDN – fără instalare)
-
-| Librărie | Versiune | Scop |
-|---|---|---|
-| [MediaPipe Hands](https://google.github.io/mediapipe/solutions/hands) | latest | Detectare mână (21 landmarks) |
-| [MediaPipe Face Mesh](https://google.github.io/mediapipe/solutions/face_mesh) | latest | Detectare față (468 landmarks) |
-| [MediaPipe Camera Utils](https://google.github.io/mediapipe/getting_started/web) | latest | Wrapper cameră web |
-| [MediaPipe Drawing Utils](https://google.github.io/mediapipe/getting_started/web) | latest | Desenare landmarks pe canvas |
-| [Bootstrap 5.3](https://getbootstrap.com/) | 5.3.0 | Layout responsive |
-| [Inter & JetBrains Mono](https://fonts.google.com/) | — | Tipografie premium |
-
----
-
-## 🧩 Arhitectura Modulară
-
-```
-app.js
-  ├── initHandsModel()       → hand-gesture.js
-  │     └── detectHandGesture()
-  │           └── HomeController.processGesture()
-  │
-  ├── initFaceModel()        → face-gesture.js
-  │     └── detectFaceGesture()
-  │           └── HomeController.processGesture()
-  │
-  └── initCamera()           → camera.js
-
-HomeController
-  ├── gestureActions{}       → mapare gest → acțiune
-  ├── HomeState.setState()   → actualizare stare
-  └── HomeUI.update()        → re-render interfață
-```
-
----
-
-## 🎨 Design System
-
-| Token | Culoare | Utilizare |
-|---|---|---|
-| `--bg` | `#08080f` | Fundal principal |
-| `--card` | `#181828` | Carduri camere |
-| `--accent` | `#6366f1` | Indigo – accente UI |
-| `--light-on` | `#fbbf24` | Galben – bec aprins |
-| `--heat-on` | `#f97316` | Portocaliu – centrală |
-| `--alarm-on` | `#ef4444` | Roșu – alarmă armată |
 
 ---
 
 ## 🤝 Contribuții
 
-Proiect academic / demonstrativ — **INOC 2026**.  
-Orice sugestii de noi gesturi sau funcționalități sunt binevenite!
-
----
-
-*Construit cu ❤️ folosind MediaPipe + JavaScript Vanilla*
+Proiect academic demonstrativ realizat pentru **INOC 2026**.
